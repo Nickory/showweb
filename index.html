@@ -1,0 +1,339 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoilSensorEmail System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f9fafb;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: #1f2a44;
+            color: #fff;
+            padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            text-align: center;
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        nav ul li {
+            margin: 0 12px;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #60a5fa;
+        }
+
+        .section {
+            padding: 50px 0;
+            text-align: center;
+        }
+
+        .section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #1f2a44;
+        }
+
+        .section p {
+            font-size: 1rem;
+            margin-bottom: 20px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section ul {
+            list-style: none;
+            max-width: 600px;
+            margin: 0 auto 20px;
+            text-align: left;
+        }
+
+        .section ul li {
+            margin-bottom: 10px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .section ul li:before {
+            content: "•";
+            color: #60a5fa;
+            position: absolute;
+            left: 0;
+        }
+
+        pre {
+            background: #1f2a44;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            max-width: 600px;
+            margin: 0 auto 20px;
+        }
+
+        .screenshot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+
+        .screenshot img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .screenshot p {
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-top: 8px;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            max-width: 700px;
+            margin: 20px auto;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        footer {
+            background: #1f2a44;
+            color: #fff;
+            padding: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            nav ul {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .section h2 {
+                font-size: 1.5rem;
+            }
+
+            .screenshot-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SoilSensorEmail System</h1>
+            <nav>
+                <ul>
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#screenshots">Screenshots</a></li>
+                    <li><a href="#demo">Demo</a></li>
+                    <li><a href="#setup">Setup</a></li>
+                    <li><a href="#development">Development</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section id="overview" class="section">
+        <div class="container">
+            <h2>Overview</h2>
+            <p>The <strong>SoilSensorEmail System</strong> is a Raspberry Pi-based solution for monitoring plant soil moisture and sending email alerts when watering is required. It combines a soil moisture sensor (FC-28), Python’s <code>smtplib</code> for notifications, and a Tkinter GUI for real-time interaction. Developed with Agile principles, the project is managed on GitHub.</p>
+        </div>
+    </section>
+
+    <section id="features" class="section">
+        <div class="container">
+            <h2>Features</h2>
+            <ul>
+                <li>Monitors soil moisture via a digital sensor on GPIO 4.</li>
+                <li>Sends email alerts at scheduled times (e.g., 07:00, 10:00) for dry soil.</li>
+                <li>Provides a Tkinter GUI for status, schedules, and email tracking.</li>
+                <li>Includes diagnostics for sensor and email functionality.</li>
+                <li>Supports a fallback mode for GUI use without hardware.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="screenshots" class="section">
+        <div class="container">
+            <h2>Screenshots</h2>
+            <div class="screenshot-grid">
+                <div class="screenshot">
+                    <img src="https://github.com/Nickory/Project2_2025/raw/main/image.png" alt="GUI">
+                    <p>Tkinter GUI showing moisture status and schedule.</p>
+                </div>
+                <div class="screenshot">
+                    <img src="https://github.com/Nickory/Project2_2025/raw/main/setup.png" alt="Setup">
+                    <p>Raspberry Pi and sensor in a plant pot.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo" class="section">
+        <div class="container">
+            <h2>Video Demo</h2>
+            <p>See the SoilSensorEmail System in action.</p>
+            <iframe src="//player.bilibili.com/player.html?isOutside=true&aid=114322583914844&bvid=BV1ZoddYqEtf&cid=29377691814&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" style="width: 100%; height: 600px;"></iframe>
+
+
+        </div>
+    </section>
+
+    <section id="setup" class="section">
+        <div class="container">
+            <h2>Setup</h2>
+            <h3>Hardware</h3>
+            <ul>
+                <li>Connect FC-28 sensor: VCC to 5V, GND to GND, DO to GPIO 4.</li>
+                <li>Insert sensor into soil and adjust potentiometer.</li>
+            </ul>
+            <h3>Software</h3>
+            <ul>
+                <li>Install libraries:
+                    <pre><code>sudo apt update
+sudo apt install python3-rpi.gpio
+pip install tk</code></pre>
+                </li>
+                <li>Clone repository:
+                    <pre><code>git clone https://github.com/Nickory/Project2_2025.git</code></pre>
+                </li>
+                <li>Configure email in <code>SoilSensorEmailGUI.py</code>.</li>
+            </ul>
+            <h3>Run</h3>
+            <pre><code>python3 SoilSensorEmailGUI.py</code></pre>
+        </div>
+    </section>
+
+    <section id="development" class="section">
+        <div class="container">
+            <h2>Development</h2>
+            <p>Built using Scrum with a two-week sprint, the project involved user story planning, sensor/email integration, GUI development, and Git-based version control.</p>
+            <p><a href="https://github.com/Nickory/Project2_2025" target="_blank">GitHub Repository</a></p>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>Ziheng Wang | ID: 202283890020</p>
+            <p>Project Semester 3 2025 | 20/04/25</p>
+            <p><a href="https://www.setu.ie" target="_blank">South East Technological University</a></p>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', e => {
+                e.preventDefault();
+                document.getElementById(anchor.getAttribute('href').substring(1)).scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+    </script>
+</body>
+</html>
